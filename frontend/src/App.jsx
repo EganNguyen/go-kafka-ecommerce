@@ -113,7 +113,7 @@ function App() {
                 <div className="header-brand">
                     <div className="header-logo">W</div>
                     <div>
-                        <h1>Watermill Store</h1>
+                        <h1>Store</h1>
                         <div className="header-subtitle">Event-Driven E-commerce • Go + Kafka</div>
                     </div>
                 </div>
