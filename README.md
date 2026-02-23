@@ -1,13 +1,13 @@
-# E-commerce App — Watermill + Kafka + React
+# E-commerce App — Go + Kafka
 
-A full-stack event-driven e-commerce application demonstrating the power of [Watermill](https://watermill.io/) with Apache Kafka.
+A simple, full-stack event-driven e-commerce application demonstrating direct Kafka interaction in Go.
 
 ## Architecture
 
 ```
 ┌────────────┐      REST       ┌─────────────┐      Kafka       ┌──────────────┐
-│   React    │ ───────────────→│   Go API    │ ───────────────→│  Watermill   │
-│  Frontend  │  /api/products  │  (net/http)  │  orders.commands │   Router     │
+│   React    │ ───────────────→│   Go API    │ ───────────────→│    Kafka     │
+│  Frontend  │  /api/products  │  (net/http)  │  orders.commands │    Topics    │
 │  (Vite)    │  /api/orders    │             │                 │              │
 └────────────┘                 └─────────────┘                 │  Command →   │
                                       ↑                        │  Event flow  │
@@ -21,15 +21,15 @@ A full-stack event-driven e-commerce application demonstrating the power of [Wat
 ```
 
 **Flow:**
-1. User adds products to cart and places an order via the React frontend.
-2. The Go API publishes a `PlaceOrder` **command** to the `orders.commands` Kafka topic.
-3. Watermill's router consumes the command, processes it (inserts into PostgreSQL, decrements stock), and publishes an `OrderPlaced` **event** to `orders.placed`.
-4. A downstream handler consumes `OrderPlaced`, confirms the order, and publishes `OrderConfirmed` to `orders.confirmed`.
+1. User places an order via the React frontend.
+2. The Go API publishes a `PlaceOrder` command to the `orders.commands` Kafka topic.
+3. A background consumer reads the command, saves the order to PostgreSQL, and publishes an `OrderPlaced` event to `orders.placed`.
+4. A downstream consumer reads `OrderPlaced` and updates the order status to `confirmed`.
 
 ## Prerequisites
 
 - Docker & Docker Compose
-- Go 1.21+
+- Go 1.25+
 - Node.js 18+
 
 ## Getting Started
@@ -39,11 +39,6 @@ A full-stack event-driven e-commerce application demonstrating the power of [Wat
 ```bash
 docker-compose up -d
 ```
-
-This starts:
-- **Kafka** (port 9092)
-- **Zookeeper** (port 2181)
-- **PostgreSQL** (port 5432)
 
 ### 2. Start Backend
 
@@ -63,22 +58,14 @@ npm install
 npm run dev
 ```
 
-The React app starts on `http://localhost:3000` with API proxy to the Go backend.
-
-## API Endpoints
-
-| Method | Endpoint        | Description           |
-|--------|-----------------|-----------------------|
-| GET    | /api/products   | List all products     |
-| POST   | /api/orders     | Place a new order     |
-| GET    | /api/orders     | List recent orders    |
+The React app starts on `http://localhost:3000`.
 
 ## Tech Stack
 
 | Layer       | Technology                          |
 |-------------|-------------------------------------|
-| Frontend    | React 19, Vite 6, Vanilla CSS      |
+| Frontend    | React 19, Vite 6, Vanilla CSS       |
 | Backend     | Go, net/http                        |
-| Messaging   | Watermill, Kafka (via Sarama)       |
+| Messaging   | Kafka (via segmentio/kafka-go)      |
 | Database    | PostgreSQL 16                       |
 | Infra       | Docker Compose                      |
