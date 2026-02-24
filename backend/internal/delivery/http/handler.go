@@ -89,6 +89,7 @@ func (h *Handler) handleGetOrders(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleGetCart(w http.ResponseWriter, r *http.Request) {
 	cartID := r.PathValue("id")
+	if cartID == "" {
 		http.Error(w, "missing cart id", http.StatusBadRequest)
 		return
 	}
