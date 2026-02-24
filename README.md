@@ -32,33 +32,48 @@ A simple, full-stack event-driven e-commerce application demonstrating direct Ka
 - Go 1.25+
 - Node.js 18+
 
-## Getting Started
+## Quick Start (Docker)
 
-### 1. Start Infrastructure
+The entire application stack (Go Backend, React Frontend, Kafka KRaft, PostgreSQL) is dockerized.
+
+### 1. Start Everything
 
 ```bash
-docker-compose up -d
+docker-compose up --build -d
+```
+
+This starts:
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8080
+- **Kafka**: KRaft mode (no Zookeeper)
+- **PostgreSQL**: port 5432
+
+### 2. View Logs
+
+```bash
+docker-compose logs -f
+```
+
+## Manual Development
+
+If you want to run components individually:
+
+### 1. Start Infrastructure Only
+```bash
+docker-compose up kafka postgres -d
 ```
 
 ### 2. Start Backend
-
 ```bash
 cd backend
-go mod tidy
 go run .
 ```
 
-The API server starts on `http://localhost:8080`.
-
 ### 3. Start Frontend
-
 ```bash
 cd frontend
-npm install
 npm run dev
 ```
-
-The React app starts on `http://localhost:3000`.
 
 ## Tech Stack
 
