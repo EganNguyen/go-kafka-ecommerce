@@ -33,6 +33,7 @@ func main() {
 	// Repositories
 	productRepo := postgres.NewProductRepository(db)
 	orderRepo := postgres.NewOrderRepository(db)
+	eventStore := postgres.NewEventStore(db)
 
 	// Seed products
 	err = productRepo.Seed(context.Background(), []entity.Product{
@@ -52,10 +53,11 @@ func main() {
 	publisher, subscriber := kafka.NewKafkaBroker(brokers)
 
 	// --- 2. Application Layer (Use Cases) ---
-	orderSvc := service.NewOrderService(orderRepo, productRepo, publisher)
+	orderSvc := service.NewOrderService(orderRepo, productRepo, eventStore, publisher)
+	cartSvc := service.NewCartService(eventStore)
 
 	// --- 3. Interface Layer (HTTP Delivery) ---
-	httpHandler := deliveryHttp.NewHandler(orderSvc)
+	httpHandler := deliveryHttp.NewHandler(orderSvc, cartSvc)
 
 	mux := http.NewServeMux()
 	httpHandler.RegisterRoutes(mux)
@@ -85,6 +87,15 @@ func main() {
 			return err
 		}
 		return orderSvc.HandleOrderPlaced(ctx, &event)
+	})
+
+	// Kafka Consumer: orders.confirmed -> HandleOrderConfirmed Event (Projection Update)
+	go subscriber.Consume(ctx, "orders.confirmed", "ecommerce-confirmed-projection", func(ctx context.Context, payload []byte) error {
+		var event entity.OrderConfirmed
+		if err := json.Unmarshal(payload, &event); err != nil {
+			return err
+		}
+		return orderSvc.HandleOrderConfirmed(ctx, &event)
 	})
 
 	go func() {

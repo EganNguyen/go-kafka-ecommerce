@@ -15,7 +15,14 @@ type ProductRepository interface {
 
 // OrderRepository handles persistence for Orders.
 type OrderRepository interface {
-	PlaceOrder(ctx context.Context, cmd *entity.PlaceOrder) (*entity.OrderPlaced, error)
-	ConfirmOrder(ctx context.Context, orderID string) error
+	PlaceOrder(ctx context.Context, cmd *entity.PlaceOrder) (*entity.OrderPlaced, error) // Deprecated
+	ConfirmOrder(ctx context.Context, orderID string) error                              // Deprecated
+	UpdateOrderProjection(ctx context.Context, event entity.Event) error
 	FindRecent(ctx context.Context, limit int) ([]entity.Order, error)
+}
+
+// EventStore handles appending and loading events for an aggregate stream.
+type EventStore interface {
+	SaveEvents(ctx context.Context, streamID string, streamType string, expectedVersion int, events []entity.Event) error
+	LoadEvents(ctx context.Context, streamID string) ([]entity.EventStoreRecord, error)
 }

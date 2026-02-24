@@ -13,11 +13,13 @@ import (
 // Handler handles HTTP requests for the application.
 type Handler struct {
 	orderSvc *service.OrderService
+	cartSvc  *service.CartService
 }
 
-func NewHandler(orderSvc *service.OrderService) *Handler {
+func NewHandler(orderSvc *service.OrderService, cartSvc *service.CartService) *Handler {
 	return &Handler{
 		orderSvc: orderSvc,
+		cartSvc:  cartSvc,
 	}
 }
 
@@ -25,6 +27,10 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/products", h.handleGetProducts)
 	mux.HandleFunc("POST /api/orders", h.handleCreateOrder)
 	mux.HandleFunc("GET /api/orders", h.handleGetOrders)
+
+	// Cart Endpoints
+	mux.HandleFunc("GET /api/cart/{id}", h.handleGetCart)
+	mux.HandleFunc("POST /api/cart/{id}/items", h.handleAddItemToCart)
 }
 
 func (h *Handler) handleGetProducts(w http.ResponseWriter, r *http.Request) {
@@ -79,6 +85,51 @@ func (h *Handler) handleGetOrders(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(orders)
+}
+
+func (h *Handler) handleGetCart(w http.ResponseWriter, r *http.Request) {
+	cartID := r.PathValue("id")
+		http.Error(w, "missing cart id", http.StatusBadRequest)
+		return
+	}
+
+	cart, err := h.cartSvc.GetCart(r.Context(), cartID)
+	if err != nil {
+		slog.Error("Failed to get cart", "err", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(cart.Items)
+}
+
+type AddCartItemRequest struct {
+	ProductID string  `json:"product_id"`
+	Quantity  int     `json:"quantity"`
+	Price     float64 `json:"price"`
+}
+
+func (h *Handler) handleAddItemToCart(w http.ResponseWriter, r *http.Request) {
+	cartID := r.PathValue("id")
+	if cartID == "" {
+		http.Error(w, "missing cart id", http.StatusBadRequest)
+		return
+	}
+
+	var req AddCartItemRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.cartSvc.AddItemToCart(r.Context(), cartID, req.ProductID, req.Quantity, req.Price); err != nil {
+		slog.Error("Failed to add item to cart", "err", err)
+		http.Error(w, "failed to add item to cart", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 // EnableCORS is a middleware to allow the React frontend to connect.

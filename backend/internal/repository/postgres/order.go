@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/egannguyen/go-kafka-ecommerce/backend/internal/entity"
 	"github.com/egannguyen/go-kafka-ecommerce/backend/internal/repository"
@@ -20,72 +19,66 @@ func NewOrderRepository(db *sql.DB) repository.OrderRepository {
 }
 
 func (r *orderRepository) PlaceOrder(ctx context.Context, cmd *entity.PlaceOrder) (*entity.OrderPlaced, error) {
-	var totalPrice float64
-	for _, item := range cmd.Items {
-		totalPrice += item.Price * float64(item.Quantity)
-	}
+	// This method is now used ONLY by the Projection consumer, so it receives the Event, not the Command.
+	// Changing signature to match projection needs.
+	return nil, fmt.Errorf("deprecated: use UpdateOrderProjection instead")
+}
 
+func (r *orderRepository) UpdateOrderProjection(ctx context.Context, event entity.Event) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
-	// Idempotency check
-	var alreadyExists bool
-	err = tx.QueryRowContext(ctx,
-		"INSERT INTO orders (id, total_price, status, created_at) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING RETURNING true",
-		cmd.OrderID, totalPrice, "placed", time.Now(),
-	).Scan(&alreadyExists)
-
-	if err == sql.ErrNoRows {
-		// Already exists, just return nil indicating it was handled
-		return nil, nil
-	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to insert order: %w", err)
-	}
-
-	for _, item := range cmd.Items {
+	switch e := event.(type) {
+	case entity.OrderPlaced:
 		_, err = tx.ExecContext(ctx,
-			"INSERT INTO order_items (order_id, product_id, name, price, quantity) VALUES ($1, $2, $3, $4, $5)",
-			cmd.OrderID, item.ProductID, item.Name, item.Price, item.Quantity,
+			"INSERT INTO orders (id, total_price, status, created_at) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING",
+			e.OrderID, e.TotalPrice, "placed", e.PlacedAt,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to insert order item: %w", err)
+			return fmt.Errorf("failed to insert order projection: %w", err)
 		}
 
-		// Decrement stock
+		for _, item := range e.Items {
+			_, err = tx.ExecContext(ctx,
+				"INSERT INTO order_items (order_id, product_id, name, price, quantity) VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING",
+				e.OrderID, item.ProductID, item.Name, item.Price, item.Quantity,
+			)
+			if err != nil {
+				return fmt.Errorf("failed to insert order item projection: %w", err)
+			}
+
+			// Decrement stock in read model
+			_, err = tx.ExecContext(ctx,
+				"UPDATE products SET stock = stock - $1 WHERE id = $2 AND stock >= $1",
+				item.Quantity, item.ProductID,
+			)
+			if err != nil {
+				return fmt.Errorf("failed to update product stock: %w", err)
+			}
+		}
+
+	case entity.OrderConfirmed:
 		_, err = tx.ExecContext(ctx,
-			"UPDATE products SET stock = stock - $1 WHERE id = $2 AND stock >= $1",
-			item.Quantity, item.ProductID,
+			"UPDATE orders SET status = 'confirmed' WHERE id = $1",
+			e.OrderID,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to update product stock: %w", err)
+			return fmt.Errorf("failed to confirm order projection: %w", err)
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	event := &entity.OrderPlaced{
-		OrderID:    cmd.OrderID,
-		Items:      cmd.Items,
-		TotalPrice: totalPrice,
-		PlacedAt:   time.Now(),
-	}
-	return event, nil
+	return nil
 }
 
 func (r *orderRepository) ConfirmOrder(ctx context.Context, orderID string) error {
-	_, err := r.db.ExecContext(ctx,
-		"UPDATE orders SET status = 'confirmed' WHERE id = $1",
-		orderID,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to confirm order: %w", err)
-	}
+	// Deprecated: handled by UpdateOrderProjection
 	return nil
 }
 

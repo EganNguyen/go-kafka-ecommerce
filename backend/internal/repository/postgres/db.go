@@ -52,6 +52,17 @@ func migrateDB(db *sql.DB) error {
 			price DOUBLE PRECISION NOT NULL DEFAULT 0,
 			quantity INT NOT NULL DEFAULT 1
 		);
+
+		CREATE TABLE IF NOT EXISTS events (
+			id TEXT PRIMARY KEY,
+			stream_id TEXT NOT NULL,
+			stream_type TEXT NOT NULL,
+			version INT NOT NULL,
+			event_type TEXT NOT NULL,
+			payload JSONB NOT NULL,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			UNIQUE(stream_id, version)
+		);
 	`)
 	return err
 }
