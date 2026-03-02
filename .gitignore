@@ -32,18 +32,18 @@ ehthumbs.db
 Thumbs.db
 
 # --- Backend specific ---
-backend/backend
-backend/backend.exe
+src/backend/backend
+src/backend/backend.exe
 
 # --- Frontend specific ---
-frontend/node_modules
-frontend/dist
-frontend/build
-frontend/.env
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.test.local
-frontend/.env.production.local
+src/frontend/node_modules
+src/frontend/dist
+src/frontend/build
+src/frontend/.env
+src/frontend/.env.local
+src/frontend/.env.development.local
+src/frontend/.env.test.local
+src/frontend/.env.production.local
 
 # npm log files
 npm-debug.log*
