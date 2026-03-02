@@ -41,7 +41,7 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: ./src/backend
     environment:
       DATABASE_URL: 'postgres://ecommerce:ecommerce@postgres:5432/ecommerce?sslmode=disable'
       KAFKA_BROKERS: 'kafka:29092'
@@ -53,7 +53,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./src/frontend
     ports:
       - "3000:80"
     environment:
