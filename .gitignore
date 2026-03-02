@@ -32,18 +32,20 @@ ehthumbs.db
 Thumbs.db
 
 # --- Backend specific ---
-src/backend/backend
-src/backend/backend.exe
+CartService/cart-service
+CartService/cart-service.exe
+CheckoutService/checkout-service
+CheckoutService/checkout-service.exe
 
 # --- Frontend specific ---
-src/frontend/node_modules
-src/frontend/dist
-src/frontend/build
-src/frontend/.env
-src/frontend/.env.local
-src/frontend/.env.development.local
-src/frontend/.env.test.local
-src/frontend/.env.production.local
+frontend/node_modules
+frontend/dist
+frontend/build
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
 
 # npm log files
 npm-debug.log*

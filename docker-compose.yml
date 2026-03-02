@@ -39,9 +39,21 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  backend:
+  cart-service:
     build:
-      context: ./src/backend
+      context: ./CartService
+    environment:
+      DATABASE_URL: 'postgres://ecommerce:ecommerce@postgres:5432/ecommerce?sslmode=disable'
+      KAFKA_BROKERS: 'kafka:29092'
+    ports:
+      - "8081:8080"
+    depends_on:
+      - kafka
+      - postgres
+
+  checkout-service:
+    build:
+      context: ./CheckoutService
     environment:
       DATABASE_URL: 'postgres://ecommerce:ecommerce@postgres:5432/ecommerce?sslmode=disable'
       KAFKA_BROKERS: 'kafka:29092'
@@ -53,13 +65,14 @@ services:
 
   frontend:
     build:
-      context: ./src/frontend
+      context: ./frontend
     ports:
       - "3000:80"
     environment:
       - VITE_API_URL=http://localhost:8080
     depends_on:
-      - backend
+      - checkout-service
+      - cart-service
 
 volumes:
   pgdata:
