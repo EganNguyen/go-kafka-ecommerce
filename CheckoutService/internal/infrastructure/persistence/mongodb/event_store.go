@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -59,13 +60,18 @@ func (s *eventStore) SaveEvents(ctx context.Context, streamID string, streamType
 
 		for _, event := range events {
 			version++
+			payload, err := json.Marshal(event)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal event %s: %w", event.EventType(), err)
+			}
+
 			docs = append(docs, bson.M{
 				"id":          uuid.NewString(),
 				"stream_id":   streamID,
 				"stream_type": streamType,
 				"version":     version,
 				"event_type":  event.EventType(),
-				"payload":     event,
+				"payload":     payload,
 				"created_at":  now,
 			})
 		}

@@ -20,11 +20,11 @@ The platform follows a **microservices architecture**:
 
 ## Services Overview
 
-| Service                   | Language    | Protocol / Storage         | Responsibility                                                  |
+| Service                   | Language    | Storage         | Responsibility                                                  |
 | ------------------------- | ----------- | -------------------------- | --------------------------------------------------------------- |
-| **Frontend**              | Go          | HTTP / gRPC, Local Session | Serves website UI, generates session IDs automatically          |
+| **Frontend**              | Go          | Local Session | Serves website UI, generates session IDs automatically          |
 | **CartService**           | Go          | redis, mongodb             | Stores and retrieves items in user shopping carts               |
-| **ProductCatalogService** | Go          | gRPC  / mongodb            | Provides product listings, search, and product details          |
+| **ProductCatalogService** | Go          | mongodb            | Provides product listings, search, and product details          |
 | **CurrencyService**       | Go          | in-memory                  | Converts money amounts between currencies                       |
 | **PaymentService**        | Go          | postgres                   | Charges credit cards (mock or real), returns transaction IDs    |
 | **ShippingService**       | Go          | postgres                   | Calculates shipping costs and processes shipments (mock)        |
@@ -40,8 +40,8 @@ The platform follows a **microservices architecture**:
 
 1. **Go-Centric Architecture:** Leverages Go’s concurrency, low memory footprint, and high performance.
 2. **High-Performance Communication:**
-
-   * gRPC for synchronous, low-latency calls.
+   * HTTP for frontend and external services.
+   * gRPC for synchronous, low-latency calls between internal services.
    * Kafka for decoupled, high-throughput asynchronous operations.
 3. **Stateless Services:** Horizontal scaling supported; only CartService maintains state in Redis.
 4. **Session Management:** Frontend generates unique session IDs per user.

@@ -13,39 +13,39 @@ type Event interface {
 
 // ItemAddedToCart is emitted when a user drops an item into their cart.
 type ItemAddedToCart struct {
-	CartID    string  `json:"cart_id"`
-	ProductID string  `json:"product_id"`
-	Quantity  int     `json:"quantity"`
-	Price     float64 `json:"price"`
+	CartID    string  `json:"cart_id" bson:"cart_id"`
+	ProductID string  `json:"product_id" bson:"product_id"`
+	Quantity  int     `json:"quantity" bson:"quantity"`
+	Price     float64 `json:"price" bson:"price"`
 }
 
 func (e ItemAddedToCart) EventType() string { return "ItemAddedToCart" }
 
 // ItemRemovedFromCart is emitted when a user removes an item or it's bought.
 type ItemRemovedFromCart struct {
-	CartID    string `json:"cart_id"`
-	ProductID string `json:"product_id"`
-	Quantity  int    `json:"quantity"`
+	CartID    string `json:"cart_id" bson:"cart_id"`
+	ProductID string `json:"product_id" bson:"product_id"`
+	Quantity  int    `json:"quantity" bson:"quantity"`
 }
 
 func (e ItemRemovedFromCart) EventType() string { return "ItemRemovedFromCart" }
 
 // CartItem represents an item in the cart.
 type CartItem struct {
-	ProductID string  `json:"product_id"`
-	Quantity  int     `json:"quantity"`
-	Price     float64 `json:"price"`
+	ProductID string  `json:"product_id" bson:"product_id"`
+	Quantity  int     `json:"quantity" bson:"quantity"`
+	Price     float64 `json:"price" bson:"price"`
 }
 
 // EventRecord represents an event stored in the event store.
 type EventRecord struct {
-	ID            string    `json:"id"`
-	StreamID      string    `json:"stream_id"`
-	StreamType    string    `json:"stream_type"`
-	Version       int       `json:"version"`
-	EventType     string    `json:"event_type"`
-	Payload       []byte    `json:"payload"`
-	CreatedAt     time.Time `json:"created_at"`
+	ID            string    `json:"id" bson:"id"`
+	StreamID      string    `json:"stream_id" bson:"stream_id"`
+	StreamType    string    `json:"stream_type" bson:"stream_type"`
+	Version       int       `json:"version" bson:"version"`
+	EventType     string    `json:"event_type" bson:"event_type"`
+	Payload       []byte    `json:"payload" bson:"payload"`
+	CreatedAt     time.Time `json:"created_at" bson:"created_at"`
 }
 
 // AggregateBase provides a basic implementation for an aggregate.

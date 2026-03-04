@@ -7,37 +7,37 @@ import (
 )
 
 type Money struct {
-	CurrencyCode string  `json:"currency_code"`
-	Units        int64   `json:"units"`
-	Nanos        int32   `json:"nanos"`
+	CurrencyCode string  `json:"currency_code" bson:"currency_code"`
+	Units        int64   `json:"units" bson:"units"`
+	Nanos        int32   `json:"nanos" bson:"nanos"`
 }
 
 // Product represents a product in the store.
 type Product struct {
-	ID          string  `json:"id"`
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Price       float64 `json:"price"`
-	ImageURL    string  `json:"image_url"`
-	Category    string  `json:"category"`
-	Stock       int     `json:"stock"`
+	ID          string  `json:"id" bson:"id"`
+	Name        string  `json:"name" bson:"name"`
+	Description string  `json:"description" bson:"description"`
+	Price       float64 `json:"price" bson:"price"`
+	ImageURL    string  `json:"image_url" bson:"image_url"`
+	Category    string  `json:"category" bson:"category"`
+	Stock       int     `json:"stock" bson:"stock"`
 }
 
 // OrderItem is a line item within an order.
 type OrderItem struct {
-	ProductID string  `json:"product_id"`
-	Name      string  `json:"name"`
-	Price     float64 `json:"price"`
-	Quantity  int     `json:"quantity"`
+	ProductID string  `json:"product_id" bson:"product_id"`
+	Name      string  `json:"name" bson:"name"`
+	Price     float64 `json:"price" bson:"price"`
+	Quantity  int     `json:"quantity" bson:"quantity"`
 }
 
 // Order represents a customer order.
 type Order struct {
-	ID         string      `json:"id"`
-	Items      []OrderItem `json:"items"`
-	TotalPrice float64     `json:"total_price"`
-	Status     string      `json:"status"` // "placed", "confirmed", "shipped"
-	CreatedAt  time.Time   `json:"created_at"`
+	ID         string      `json:"id" bson:"id"`
+	Items      []OrderItem `json:"items" bson:"items"`
+	TotalPrice float64     `json:"total_price" bson:"total_price"`
+	Status     string      `json:"status" bson:"status"` // "placed", "confirmed", "shipped"
+	CreatedAt  time.Time   `json:"created_at" bson:"created_at"`
 }
 
 // --- Commands ---
@@ -103,13 +103,13 @@ func (e ReservationConfirmed) EventType() string { return "ReservationConfirmed"
 
 // EventRecord represents an event stored in the event store.
 type EventRecord struct {
-	ID            string    `json:"id"`
-	StreamID      string    `json:"stream_id"`
-	StreamType    string    `json:"stream_type"`
-	Version       int       `json:"version"`
-	EventType     string    `json:"event_type"`
-	Payload       []byte    `json:"payload"`
-	CreatedAt     time.Time `json:"created_at"`
+	ID            string    `json:"id" bson:"id"`
+	StreamID      string    `json:"stream_id" bson:"stream_id"`
+	StreamType    string    `json:"stream_type" bson:"stream_type"`
+	Version       int       `json:"version" bson:"version"`
+	EventType     string    `json:"event_type" bson:"event_type"`
+	Payload       []byte    `json:"payload" bson:"payload"`
+	CreatedAt     time.Time `json:"created_at" bson:"created_at"`
 }
 
 // AggregateBase provides a basic implementation for an aggregate.

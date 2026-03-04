@@ -87,6 +87,9 @@ func seedProducts(ctx context.Context, db *mongo.Database) error {
 		},
 	}
 
+	// Drop collection to re-seed with correct tags
+	_ = coll.Drop(ctx)
+
 	_, err = coll.InsertMany(ctx, products)
 	if err != nil {
 		return fmt.Errorf("failed to seed products: %w", err)

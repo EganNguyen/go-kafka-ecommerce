@@ -4,13 +4,13 @@ import "context"
 
 // Product represents a product in the store.
 type Product struct {
-	ID          string  `json:"id"`
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Price       float64 `json:"price"`
-	ImageURL    string  `json:"image_url"`
-	Category    string  `json:"category"`
-	Stock       int     `json:"stock"`
+	ID          string  `json:"id" bson:"id"`
+	Name        string  `json:"name" bson:"name"`
+	Description string  `json:"description" bson:"description"`
+	Price       float64 `json:"price" bson:"price"`
+	ImageURL    string  `json:"image_url" bson:"image_url"`
+	Category    string  `json:"category" bson:"category"`
+	Stock       int     `json:"stock" bson:"stock"`
 }
 
 type ProductRepository interface {
