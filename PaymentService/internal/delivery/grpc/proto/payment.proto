@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package payment;
+
+option go_package = "github.com/egannguyen/go-kafka-ecommerce/payment-service/internal/delivery/grpc/pb";
+
+service PaymentService {
+    rpc Charge(ChargeRequest) returns (ChargeResponse);
+}
+
+message CreditCardInfo {
+    string number = 1;
+    int32 cvv = 2;
+    int32 expiration_month = 3;
+    int32 expiration_year = 4;
+}
+
+message Money {
+    string currency_code = 1;
+    int64 units = 2;
+    int32 nanos = 3;
+}
+
+message ChargeRequest {
+    Money amount = 1;
+    CreditCardInfo credit_card = 2;
+}
+
+message ChargeResponse {
+    string transaction_id = 1;
+}

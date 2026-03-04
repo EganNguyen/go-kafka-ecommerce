@@ -18,23 +18,34 @@ type CheckoutUseCase interface {
 }
 
 type checkoutUseCase struct {
-	orderRepo   domain.OrderRepository
-	productRepo domain.ProductRepository
-	eventStore  domain.EventStore
-	publisher   domain.Publisher
+	orderRepo       domain.OrderRepository
+	productService  domain.ProductService
+	currencyService domain.CurrencyService
+	paymentService  domain.PaymentService
+	eventStore      domain.EventStore
+	publisher       domain.Publisher
 }
 
-func NewCheckoutUseCase(orderRepo domain.OrderRepository, productRepo domain.ProductRepository, eventStore domain.EventStore, publisher domain.Publisher) CheckoutUseCase {
+func NewCheckoutUseCase(
+	orderRepo domain.OrderRepository,
+	productService domain.ProductService,
+	currencyService domain.CurrencyService,
+	paymentService domain.PaymentService,
+	eventStore domain.EventStore,
+	publisher domain.Publisher,
+) CheckoutUseCase {
 	return &checkoutUseCase{
-		orderRepo:   orderRepo,
-		productRepo: productRepo,
-		eventStore:  eventStore,
-		publisher:   publisher,
+		orderRepo:       orderRepo,
+		productService:  productService,
+		currencyService: currencyService,
+		paymentService:  paymentService,
+		eventStore:      eventStore,
+		publisher:       publisher,
 	}
 }
 
 func (u *checkoutUseCase) GetProducts(ctx context.Context) ([]domain.Product, error) {
-	return u.productRepo.FindAll(ctx)
+	return u.productService.ListProducts(ctx)
 }
 
 func (u *checkoutUseCase) GetRecentOrders(ctx context.Context, limit int) ([]domain.Order, error) {
@@ -70,11 +81,9 @@ func (u *checkoutUseCase) PlaceOrder(ctx context.Context, cmd *domain.PlaceOrder
 		invAgg := domain.NewInventoryAggregate(item.ProductID)
 		// Simulating legacy seed for stock check if no events exist
 		if len(invRecords) == 0 {
-			prods, _ := u.productRepo.FindAll(ctx)
-			for _, p := range prods {
-				if p.ID == item.ProductID {
-					invAgg.HardStock = p.Stock
-				}
+			p, err := u.productService.GetProduct(ctx, item.ProductID)
+			if err == nil && p != nil {
+				invAgg.HardStock = p.Stock
 			}
 		}
 
@@ -101,6 +110,30 @@ func (u *checkoutUseCase) PlaceOrder(ctx context.Context, cmd *domain.PlaceOrder
 			slog.Error("Failed to save InventoryReserved event", "err", err)
 		}
 	}
+
+	// 2. Process Payment
+	// In a real app, CreditCardInfo would come from the command
+	// For now, we use a mock card if not provided
+	mockCard := domain.CreditCardInfo{
+		Number:          "1234-5678-9012-3456",
+		CVV:             123,
+		ExpirationMonth: 12,
+		ExpirationYear:  2025,
+	}
+
+	amount := domain.Money{
+		CurrencyCode: "USD", // Assuming prices are in USD for now
+		Units:        int64(totalPrice),
+		Nanos:        int32((totalPrice - float64(int64(totalPrice))) * 1e9),
+	}
+
+	txID, err := u.paymentService.Charge(ctx, amount, mockCard)
+	if err != nil {
+		slog.Error("Payment failed", "order_id", cmd.OrderID, "err", err)
+		// Compensation logic would go here (e.g., releasing inventory)
+		return fmt.Errorf("payment failed: %w", err)
+	}
+	slog.Info("Payment successful", "order_id", cmd.OrderID, "transaction_id", txID)
 
 	placedEvent := domain.OrderPlaced{
 		OrderID:    cmd.OrderID,

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package productcatalog;
+
+option go_package = "github.com/egannguyen/go-kafka-ecommerce/product-catalog-service/internal/delivery/grpc/pb";
+
+service ProductCatalogService {
+    rpc GetProduct(GetProductRequest) returns (Product);
+    rpc ListProducts(ListProductsRequest) returns (ListProductsResponse);
+}
+
+message Product {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    float price = 4;
+    string image_url = 5;
+    string category = 6;
+    int32 stock = 7;
+}
+
+message GetProductRequest {
+    string id = 1;
+}
+
+message ListProductsRequest {}
+
+message ListProductsResponse {
+    repeated Product products = 1;
+}

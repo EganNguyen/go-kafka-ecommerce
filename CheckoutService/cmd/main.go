@@ -11,6 +11,7 @@ import (
 
 	deliveryHttp "github.com/egannguyen/go-kafka-ecommerce/checkout-service/internal/delivery/http"
 	"github.com/egannguyen/go-kafka-ecommerce/checkout-service/internal/domain"
+	"github.com/egannguyen/go-kafka-ecommerce/checkout-service/internal/infrastructure/grpc"
 	"github.com/egannguyen/go-kafka-ecommerce/checkout-service/internal/infrastructure/messaging/kafka"
 	"github.com/egannguyen/go-kafka-ecommerce/checkout-service/internal/infrastructure/persistence/postgres"
 	"github.com/egannguyen/go-kafka-ecommerce/checkout-service/internal/usecase"
@@ -28,28 +29,35 @@ func main() {
 	}
 	defer db.Close()
 
-	productRepo := postgres.NewProductRepository(db)
 	orderRepo := postgres.NewOrderRepository(db)
 	eventStore := postgres.NewEventStore(db)
 
-	// Seed products
-	err = productRepo.Seed(context.Background(), []domain.Product{
-		{ID: "prod-001", Name: "Wireless Noise-Cancelling Headphones", Description: "Premium over-ear headphones with active noise cancellation and 30-hour battery life.", Price: 349.99, ImageURL: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400", Category: "Electronics", Stock: 50},
-		{ID: "prod-002", Name: "Mechanical Keyboard RGB", Description: "Cherry MX switches with per-key RGB lighting and aluminum frame.", Price: 179.99, ImageURL: "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=400", Category: "Electronics", Stock: 120},
-		{ID: "prod-003", Name: "Ultrawide Curved Monitor 34\"", Description: "UWQHD 3440x1440 144Hz IPS panel with USB-C connectivity.", Price: 699.99, ImageURL: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=400", Category: "Electronics", Stock: 30},
-		{ID: "prod-004", Name: "Ergonomic Office Chair", Description: "Adjustable lumbar support, breathable mesh, and 4D armrests.", Price: 549.99, ImageURL: "https://images.unsplash.com/photo-1592078615290-033ee584e267?w=400", Category: "Furniture", Stock: 25},
-		{ID: "prod-005", Name: "Smart LED Desk Lamp", Description: "Adjustable color temperature, brightness levels, and USB charging port.", Price: 89.99, ImageURL: "https://images.unsplash.com/photo-1507473885765-e6ed057ab6fe?w=400", Category: "Home", Stock: 200},
-		{ID: "prod-006", Name: "Premium Laptop Backpack", Description: "Water-resistant 17\" laptop compartment with anti-theft design.", Price: 129.99, ImageURL: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400", Category: "Accessories", Stock: 80},
-	})
+	productCatalogAddr := getEnv("PRODUCT_CATALOG_ADDR", "localhost:50051")
+	productService, err := grpc.NewProductServiceClient(productCatalogAddr)
 	if err != nil {
-		slog.Error("Failed to seed products", "err", err)
+		slog.Error("Failed to init product service client", "err", err)
+		os.Exit(1)
+	}
+
+	currencyAddr := getEnv("CURRENCY_SERVICE_ADDR", "localhost:50051")
+	currencyService, err := grpc.NewCurrencyServiceClient(currencyAddr)
+	if err != nil {
+		slog.Error("Failed to init currency service client", "err", err)
+		os.Exit(1)
+	}
+
+	paymentAddr := getEnv("PAYMENT_SERVICE_ADDR", "localhost:50051")
+	paymentService, err := grpc.NewPaymentServiceClient(paymentAddr)
+	if err != nil {
+		slog.Error("Failed to init payment service client", "err", err)
+		os.Exit(1)
 	}
 
 	brokers := []string{getEnv("KAFKA_BROKERS", "localhost:9092")}
 	publisher, subscriber := kafka.NewKafkaBroker(brokers)
 
 	// --- 2. Application Layer (Use Cases) ---
-	checkoutUseCase := usecase.NewCheckoutUseCase(orderRepo, productRepo, eventStore, publisher)
+	checkoutUseCase := usecase.NewCheckoutUseCase(orderRepo, productService, currencyService, paymentService, eventStore, publisher)
 
 	// --- 3. Interface Layer (HTTP Delivery) ---
 	httpHandler := deliveryHttp.NewHandler(checkoutUseCase)

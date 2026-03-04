@@ -10,7 +10,9 @@ import (
 
 	deliveryHttp "github.com/egannguyen/go-kafka-ecommerce/cart-service/internal/delivery/http"
 	"github.com/egannguyen/go-kafka-ecommerce/cart-service/internal/infrastructure/persistence/postgres"
+	"github.com/egannguyen/go-kafka-ecommerce/cart-service/internal/infrastructure/persistence/redis"
 	"github.com/egannguyen/go-kafka-ecommerce/cart-service/internal/usecase"
+	redisClient "github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -27,8 +29,14 @@ func main() {
 
 	eventStore := postgres.NewEventStore(db)
 
+	redisURL := getEnv("REDIS_URL", "localhost:6379")
+	rdb := redisClient.NewClient(&redisClient.Options{
+		Addr: redisURL,
+	})
+	cartRepo := redis.NewCartRepository(rdb)
+
 	// --- 2. Application Layer (Use Cases) ---
-	cartUseCase := usecase.NewCartUseCase(eventStore)
+	cartUseCase := usecase.NewCartUseCase(eventStore, cartRepo)
 
 	// --- 3. Interface Layer (HTTP Delivery) ---
 	httpHandler := deliveryHttp.NewHandler(cartUseCase)

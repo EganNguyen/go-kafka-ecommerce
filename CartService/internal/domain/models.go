@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -126,4 +127,17 @@ func (a *CartAggregate) Rehydrate(records []EventRecord) error {
 		}
 	}
 	return nil
+}
+
+// Interfaces
+
+type CartRepository interface {
+	Save(ctx context.Context, cart *CartAggregate) error
+	Get(ctx context.Context, cartID string) (*CartAggregate, error)
+	Delete(ctx context.Context, cartID string) error
+}
+
+type EventStore interface {
+	SaveEvents(ctx context.Context, streamID string, streamType string, expectedVersion int, events []Event) error
+	LoadEvents(ctx context.Context, streamID string) ([]EventRecord, error)
 }

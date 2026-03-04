@@ -6,6 +6,12 @@ import (
 	"time"
 )
 
+type Money struct {
+	CurrencyCode string  `json:"currency_code"`
+	Units        int64   `json:"units"`
+	Nanos        int32   `json:"nanos"`
+}
+
 // Product represents a product in the store.
 type Product struct {
 	ID          string  `json:"id"`
