@@ -9,7 +9,7 @@ import (
 	"syscall"
 
 	deliveryHttp "github.com/egannguyen/go-kafka-ecommerce/cart-service/internal/delivery/http"
-	"github.com/egannguyen/go-kafka-ecommerce/cart-service/internal/infrastructure/persistence/postgres"
+	"github.com/egannguyen/go-kafka-ecommerce/cart-service/internal/infrastructure/persistence/mongodb"
 	"github.com/egannguyen/go-kafka-ecommerce/cart-service/internal/infrastructure/persistence/redis"
 	"github.com/egannguyen/go-kafka-ecommerce/cart-service/internal/usecase"
 	redisClient "github.com/redis/go-redis/v9"
@@ -19,15 +19,14 @@ func main() {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 
 	// --- 1. Infrastructure Layer ---
-	dsn := getEnv("DATABASE_URL", "postgres://ecommerce:ecommerce@localhost:5432/ecommerce?sslmode=disable")
-	db, err := postgres.InitDB(dsn)
+	mongoURL := getEnv("MONGODB_URL", "mongodb://mongodb:27017")
+	db, err := mongodb.InitDB(mongoURL)
 	if err != nil {
-		slog.Error("Failed to init database", "err", err)
+		slog.Error("Failed to init mongodb", "err", err)
 		os.Exit(1)
 	}
-	defer db.Close()
 
-	eventStore := postgres.NewEventStore(db)
+	eventStore := mongodb.NewEventStore(db)
 
 	redisURL := getEnv("REDIS_URL", "localhost:6379")
 	rdb := redisClient.NewClient(&redisClient.Options{

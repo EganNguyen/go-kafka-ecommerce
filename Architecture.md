@@ -23,15 +23,15 @@ The platform follows a **microservices architecture**:
 | Service                   | Language    | Protocol / Storage         | Responsibility                                                  |
 | ------------------------- | ----------- | -------------------------- | --------------------------------------------------------------- |
 | **Frontend**              | Go          | HTTP / gRPC, Local Session | Serves website UI, generates session IDs automatically          |
-| **CartService**           | Go          | Redis                      | Stores and retrieves items in user shopping carts               |
-| **ProductCatalogService** | Go          | JSON / gRPC                | Provides product listings, search, and product details          |
-| **CurrencyService**       | Go          | Memory / External API      | Converts money amounts between currencies (highest QPS service) |
-| **PaymentService**        | Go          | N/A                        | Charges credit cards (mock or real), returns transaction IDs    |
-| **ShippingService**       | Go          | N/A                        | Calculates shipping costs and processes shipments (mock)        |
-| **EmailService**          | Go          | N/A                        | Sends order confirmation emails (mock, async via Kafka)         |
-| **CheckoutService**       | Go          | N/A                        | Orchestrates checkout workflow: payment, shipping, email        |
-| **RecommendationService** | Go          | N/A                        | Suggests products based on cart content (event-driven)          |
-| **AdService**             | Go          | N/A                        | Provides contextual ads                                         |
+| **CartService**           | Go          | redis, mongodb             | Stores and retrieves items in user shopping carts               |
+| **ProductCatalogService** | Go          | gRPC  / mongodb            | Provides product listings, search, and product details          |
+| **CurrencyService**       | Go          | in-memory                  | Converts money amounts between currencies                       |
+| **PaymentService**        | Go          | postgres                   | Charges credit cards (mock or real), returns transaction IDs    |
+| **ShippingService**       | Go          | postgres                   | Calculates shipping costs and processes shipments (mock)        |
+| **EmailService**          | Go          | postgres                   | Sends order confirmation emails (mock, async via Kafka)         |
+| **CheckoutService**       | Go          | mongodb                    | Orchestrates checkout workflow: payment, shipping, email        |
+| **RecommendationService** | Go          | mongodb                    | Suggests products based on cart content (event-driven)          |
+| **AdService**             | Go          | mongodb                    | Provides contextual ads                                         |
 | **LoadGenerator**         | Go / Locust | N/A                        | Simulates realistic user shopping flows for load testing        |
 
 ---

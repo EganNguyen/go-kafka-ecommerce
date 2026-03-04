@@ -21,21 +21,19 @@ func InitDB(dsn string) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to migrate database: %w", err)
 	}
 
-	slog.Info("Database connected and migrated")
+	slog.Info("PaymentService Database connected and migrated")
 	return db, nil
 }
 
 func migrateDB(db *sql.DB) error {
 	_, err := db.Exec(`
-		CREATE TABLE IF NOT EXISTS events (
+		CREATE TABLE IF NOT EXISTS transactions (
 			id TEXT PRIMARY KEY,
-			stream_id TEXT NOT NULL,
-			stream_type TEXT NOT NULL,
-			version INT NOT NULL,
-			event_type TEXT NOT NULL,
-			payload JSONB NOT NULL,
-			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-			UNIQUE(stream_id, version)
+			amount_units BIGINT NOT NULL,
+			amount_nanos INT NOT NULL,
+			currency_code TEXT NOT NULL,
+			card_number_last4 TEXT NOT NULL,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 		);
 	`)
 	return err

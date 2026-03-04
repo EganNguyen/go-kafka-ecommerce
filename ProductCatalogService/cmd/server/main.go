@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"log"
 	"log/slog"
 	stdhttp "net/http"
@@ -14,34 +13,24 @@ import (
 	deliveryGrpc "github.com/egannguyen/go-kafka-ecommerce/product-catalog-service/internal/delivery/grpc"
 	"github.com/egannguyen/go-kafka-ecommerce/product-catalog-service/internal/delivery/grpc/pb"
 	deliveryHttp "github.com/egannguyen/go-kafka-ecommerce/product-catalog-service/internal/delivery/http"
-	"github.com/egannguyen/go-kafka-ecommerce/product-catalog-service/internal/infrastructure/persistence/postgres"
+	"github.com/egannguyen/go-kafka-ecommerce/product-catalog-service/internal/infrastructure/persistence/mongodb"
 	"github.com/egannguyen/go-kafka-ecommerce/product-catalog-service/internal/usecase"
-	_ "github.com/lib/pq"
 	stdgrpc "google.golang.org/grpc"
 	"net"
 )
 
 func main() {
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		dbURL = "postgres://ecommerce:ecommerce@postgres:5432/ecommerce?sslmode=disable"
+	mongoURL := os.Getenv("MONGODB_URL")
+	if mongoURL == "" {
+		mongoURL = "mongodb://mongodb:27017"
 	}
 
-	db, err := sql.Open("postgres", dbURL)
+	db, err := mongodb.InitDB(mongoURL)
 	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
-	}
-	defer db.Close()
-
-	// Wait for DB to be ready
-	for i := 0; i < 10; i++ {
-		if err := db.Ping(); err == nil {
-			break
-		}
-		time.Sleep(2 * time.Second)
+		log.Fatal("Failed to connect to mongodb:", err)
 	}
 
-	repo := postgres.NewProductRepository(db)
+	repo := mongodb.NewProductRepository(db)
 	catalogUseCase := usecase.NewCatalogUseCase(repo)
 	handler := deliveryHttp.NewHandler(catalogUseCase)
 

@@ -10,12 +10,25 @@ import (
 
 	"github.com/egannguyen/go-kafka-ecommerce/payment-service/internal/delivery/grpc"
 	"github.com/egannguyen/go-kafka-ecommerce/payment-service/internal/delivery/grpc/pb"
+	"github.com/egannguyen/go-kafka-ecommerce/payment-service/internal/infrastructure/persistence/postgres"
 	"github.com/egannguyen/go-kafka-ecommerce/payment-service/internal/usecase"
 	g "google.golang.org/grpc"
 )
 
 func main() {
-	useCase := usecase.NewPaymentUseCase()
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		dbURL = "postgres://ecommerce:ecommerce@postgres:5432/ecommerce?sslmode=disable"
+	}
+
+	db, err := postgres.InitDB(dbURL)
+	if err != nil {
+		log.Fatal("Failed to connect to database:", err)
+	}
+	defer db.Close()
+
+	repo := postgres.NewTransactionRepository(db)
+	useCase := usecase.NewPaymentUseCase(repo)
 	grpcSrv := g.NewServer()
 	pb.RegisterPaymentServiceServer(grpcSrv, grpc.NewServer(useCase))
 

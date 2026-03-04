@@ -9,6 +9,15 @@ type CreditCardInfo struct {
 	ExpirationYear  int32
 }
 
+type Transaction struct {
+	ID            string
+	AmountUnits   int64
+	AmountNanos   int32
+	CurrencyCode  string
+	CardNumberLast4 string
+	CreatedAt     string
+}
+
 type Money struct {
 	CurrencyCode string
 	Units        int64
@@ -17,4 +26,8 @@ type Money struct {
 
 type PaymentService interface {
 	Charge(ctx context.Context, amount Money, card CreditCardInfo) (string, error)
+}
+
+type TransactionRepository interface {
+	Save(ctx context.Context, tx *Transaction) error
 }

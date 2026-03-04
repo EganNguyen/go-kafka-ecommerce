@@ -13,7 +13,7 @@ import (
 	"github.com/egannguyen/go-kafka-ecommerce/checkout-service/internal/domain"
 	"github.com/egannguyen/go-kafka-ecommerce/checkout-service/internal/infrastructure/grpc"
 	"github.com/egannguyen/go-kafka-ecommerce/checkout-service/internal/infrastructure/messaging/kafka"
-	"github.com/egannguyen/go-kafka-ecommerce/checkout-service/internal/infrastructure/persistence/postgres"
+	"github.com/egannguyen/go-kafka-ecommerce/checkout-service/internal/infrastructure/persistence/mongodb"
 	"github.com/egannguyen/go-kafka-ecommerce/checkout-service/internal/usecase"
 )
 
@@ -21,16 +21,15 @@ func main() {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 
 	// --- 1. Infrastructure Layer ---
-	dsn := getEnv("DATABASE_URL", "postgres://ecommerce:ecommerce@localhost:5432/ecommerce?sslmode=disable")
-	db, err := postgres.InitDB(dsn)
+	mongoURL := getEnv("MONGODB_URL", "mongodb://mongodb:27017")
+	db, err := mongodb.InitDB(mongoURL)
 	if err != nil {
-		slog.Error("Failed to init database", "err", err)
+		slog.Error("Failed to init mongodb", "err", err)
 		os.Exit(1)
 	}
-	defer db.Close()
 
-	orderRepo := postgres.NewOrderRepository(db)
-	eventStore := postgres.NewEventStore(db)
+	orderRepo := mongodb.NewOrderRepository(db)
+	eventStore := mongodb.NewEventStore(db)
 
 	productCatalogAddr := getEnv("PRODUCT_CATALOG_ADDR", "localhost:50051")
 	productService, err := grpc.NewProductServiceClient(productCatalogAddr)

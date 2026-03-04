@@ -44,25 +44,32 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  mongodb:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+
   cart-service:
     build:
       context: ./CartService
     environment:
-      DATABASE_URL: 'postgres://ecommerce:ecommerce@postgres:5432/ecommerce?sslmode=disable'
+      MONGODB_URL: 'mongodb://mongodb:27017'
       REDIS_URL: 'redis:6379'
       KAFKA_BROKERS: 'kafka:29092'
     ports:
       - "8081:8080"
     depends_on:
       - kafka
-      - postgres
       - redis
+      - mongodb
 
   checkout-service:
     build:
       context: ./CheckoutService
     environment:
-      DATABASE_URL: 'postgres://ecommerce:ecommerce@postgres:5432/ecommerce?sslmode=disable'
+      MONGODB_URL: 'mongodb://mongodb:27017'
       KAFKA_BROKERS: 'kafka:29092'
       PRODUCT_CATALOG_ADDR: 'productcatalog-service:50051'
       CURRENCY_SERVICE_ADDR: 'currency-service:50051'
@@ -71,20 +78,20 @@ services:
       - "8080:8080"
     depends_on:
       - kafka
-      - postgres
       - productcatalog-service
       - currency-service
       - payment-service
+      - mongodb
 
   productcatalog-service:
     build:
       context: ./ProductCatalogService
     environment:
-      DATABASE_URL: 'postgres://ecommerce:ecommerce@postgres:5432/ecommerce?sslmode=disable'
+      MONGODB_URL: 'mongodb://mongodb:27017'
     ports:
       - "8082:8080"
     depends_on:
-      - postgres
+      - mongodb
 
   currency-service:
     build:
@@ -95,8 +102,12 @@ services:
   payment-service:
     build:
       context: ./PaymentService
+    environment:
+      DATABASE_URL: 'postgres://ecommerce:ecommerce@postgres:5432/ecommerce?sslmode=disable'
     ports:
       - "50052:50051"
+    depends_on:
+      - postgres
 
   frontend:
     build:
@@ -114,3 +125,4 @@ services:
 
 volumes:
   pgdata:
+  mongodata:
