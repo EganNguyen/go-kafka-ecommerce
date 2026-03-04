@@ -115,7 +115,7 @@ services:
     ports:
       - "3000:80"
     environment:
-      - VITE_API_URL=http://localhost:8082
+      - VITE_API_URL=http://localhost:8080
     depends_on:
       - checkout-service
       - cart-service
