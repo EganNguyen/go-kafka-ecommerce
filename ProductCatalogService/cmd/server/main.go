@@ -5,19 +5,19 @@ import (
 	"database/sql"
 	"log"
 	"log/slog"
-	"net/http"
+	stdhttp "net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/egannguyen/go-kafka-ecommerce/product-catalog-service/internal/delivery/grpc"
+	deliveryGrpc "github.com/egannguyen/go-kafka-ecommerce/product-catalog-service/internal/delivery/grpc"
 	"github.com/egannguyen/go-kafka-ecommerce/product-catalog-service/internal/delivery/grpc/pb"
-	"github.com/egannguyen/go-kafka-ecommerce/product-catalog-service/internal/delivery/http"
+	deliveryHttp "github.com/egannguyen/go-kafka-ecommerce/product-catalog-service/internal/delivery/http"
 	"github.com/egannguyen/go-kafka-ecommerce/product-catalog-service/internal/infrastructure/persistence/postgres"
 	"github.com/egannguyen/go-kafka-ecommerce/product-catalog-service/internal/usecase"
 	_ "github.com/lib/pq"
-	"google.golang.org/grpc"
+	stdgrpc "google.golang.org/grpc"
 	"net"
 )
 
@@ -43,24 +43,24 @@ func main() {
 
 	repo := postgres.NewProductRepository(db)
 	catalogUseCase := usecase.NewCatalogUseCase(repo)
-	handler := http.NewHandler(catalogUseCase)
+	handler := deliveryHttp.NewHandler(catalogUseCase)
 
 	// HTTP Handler
-	mux := http.NewServeMux()
+	mux := stdhttp.NewServeMux()
 	handler.RegisterRoutes(mux)
 
-	srv := &http.Server{
+	srv := &stdhttp.Server{
 		Addr:    ":8080",
-		Handler: http.EnableCORS(mux),
+		Handler: deliveryHttp.EnableCORS(mux),
 	}
 
 	// gRPC Server
-	grpcSrv := grpc.NewServer()
-	pb.RegisterProductCatalogServiceServer(grpcSrv, grpc.NewServer(catalogUseCase))
+	grpcSrv := stdgrpc.NewServer()
+	pb.RegisterProductCatalogServiceServer(grpcSrv, deliveryGrpc.NewServer(catalogUseCase))
 
 	go func() {
 		slog.Info("ProductCatalogService HTTP starting on :8080")
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := srv.ListenAndServe(); err != nil && err != stdhttp.ErrServerClosed {
 			log.Fatalf("http listen: %s\n", err)
 		}
 	}()
