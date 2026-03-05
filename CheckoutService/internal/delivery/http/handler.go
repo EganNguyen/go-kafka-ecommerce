@@ -21,21 +21,8 @@ func NewHandler(checkoutUseCase usecase.CheckoutUseCase) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /api/products", h.handleGetProducts)
 	mux.HandleFunc("POST /api/orders", h.handleCreateOrder)
 	mux.HandleFunc("GET /api/orders", h.handleGetOrders)
-}
-
-func (h *Handler) handleGetProducts(w http.ResponseWriter, r *http.Request) {
-	products, err := h.checkoutUseCase.GetProducts(r.Context())
-	if err != nil {
-		slog.Error("Failed to get products", "err", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(products)
 }
 
 type CreateOrderRequest struct {

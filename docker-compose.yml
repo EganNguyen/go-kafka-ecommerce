@@ -58,8 +58,6 @@ services:
       MONGODB_URL: 'mongodb://mongodb:27017'
       REDIS_URL: 'redis:6379'
       KAFKA_BROKERS: 'kafka:29092'
-    ports:
-      - "8081:8080"
     depends_on:
       - kafka
       - redis
@@ -74,8 +72,6 @@ services:
       PRODUCT_CATALOG_ADDR: 'productcatalog-service:50051'
       CURRENCY_SERVICE_ADDR: 'currency-service:50051'
       PAYMENT_SERVICE_ADDR: 'payment-service:50051'
-    ports:
-      - "8080:8080"
     depends_on:
       - kafka
       - productcatalog-service
@@ -88,8 +84,6 @@ services:
       context: ./ProductCatalogService
     environment:
       MONGODB_URL: 'mongodb://mongodb:27017'
-    ports:
-      - "8082:8080"
     depends_on:
       - mongodb
 
@@ -109,6 +103,16 @@ services:
     depends_on:
       - postgres
 
+  api-gateway:
+    build:
+      context: ./go-api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - checkout-service
+      - cart-service
+      - productcatalog-service
+
   frontend:
     build:
       context: ./frontend
@@ -117,11 +121,7 @@ services:
     environment:
       - VITE_API_URL=http://localhost:8080
     depends_on:
-      - checkout-service
-      - cart-service
-      - productcatalog-service
-      - currency-service
-      - payment-service
+      - api-gateway
 
 volumes:
   pgdata:
